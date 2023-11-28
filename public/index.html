@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ChatApp</title>
+    <script src="vue.js" defer></script>
+    <script src="./script.js" defer></script>
+    <script src="tailwindcss.js"></script>
+    <script src="tailwind.config.js"></script>
+</head>
+
+<body class="bg-gray-400" id="app">
+
+
+    <div v-cloak class="flex">
+        <div class="bg-gray-800 text-white w-1/6 h-screen fixed top-0 left-0">
+            <h1 class="text-center text-purple-600 font-bold my-4 text-2xl truncate" v-cloak>Hi {{name}} ..!</h1>
+            <div class="flex flex-row justify-center items-center space-x-2 py-4">
+                <h2 class="text-center font-bold">Active Users</h2>
+                <h2 class="rounded-full animate-ping  p-2"
+                    :class="{ 'bg-green-400': online.length > 0 , 'bg-red-400':online.length === 0 }">
+                </h2>
+
+            </div>
+            <div class=" py-4 space-y-3 h-full flex flex-col hover:space-y-4 transition-all duration-200">
+                <div v-for="( details, user) in online" :key="user.name" @click="this.selected=user"
+                    class="cursor-pointer px-4 py-2 ml-2 rounded-md bg-slate-400 w-[90%] hover:-translate-y-1 scale-95 hover:scale-100 transition-all duration-200 ring-2 border-2 ring-emerald-500"
+                    :class="{'ring-pink-400': user.typing}">
+                    <div class="flex justify-between transition-all duration-75 ">
+                        <span class="truncate mr-1 capitalize">{{user}}</span>
+                        <span class="text-sm font-thin text-gray-700" :hidden="!details.typing">typping...</span>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+        <div class="w-4/5 ml-auto h-screen   flex flex-row justify-center ">
+            <div
+                class="fixed overflow-y-auto bg-white w-4/5 h-full border-black border-4 rounded-xl my-2 flex flex-col justify-between">
+                <div class="flex flex-col h-[100%]" v-if="selected">
+                    <div class="text-center  text-xl my-3 bg-emerald-100 w-full">Chatting with <span
+                            class="text-blue-400">{{selected}} </span></div>
+
+                    <div class="space-y-2 flex flex-col pb-56">
+                        <div class="border-2" v-for="message in online[selected]?.messages">
+                            <div class="flex py-1 space-x-2 items-stretch"
+                                :class="{'flex-row':message.from!==name ,'flex-row-reverse':message.from===name }">
+                                <div class=" p-2 w-8 h-8 rounded-full  flex border-4 border-emerald-400 justify-center items-center"
+                                    :class="{'ml-3':message.from===name ,'bg-green-400':message.from===name ,'bg-cyan-600':message.from!==name, 'border-emerald-500':message.from===name ,'border-cyan-700':message.from!==name }">
+                                    <span>{{selected[0]}}</span>
+                                </div>
+                                <span class="self-center h-fit">{{message.message}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full">
+                        <div class="w-full fixed bottom-20 left-28">
+                            <form @submit.prevent="sendMessage" class="flex justify-center w-full mb-10 fixed">
+                                <div class="flex flex-row items-center justify-center h-10 w-full"><input
+                                        placeholder="Input Message..!" type="text"
+                                        class="h-full focus:outline-none ring-purple-300 focus:ring-purple-500 ring-4 rounded-lg mx-4 pl-3 w-[50%] focus:scale-105 transition-all duration-200"
+                                        v-model="message">
+                                    <button
+                                        class="h-full border-emerald-500 rounded-lg border-4 bg-emerald-400 transition-all duration-200 ease-out hover:scale-110 px-2">🤜Send</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+
+                </div>
+                <div v-else class="h-[100%] bg-emerald-200">
+                    <h1 class="text-center font-extrabold text-2xl">No Chat Selected</h1>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            [v-cloak] {
+                visibility: hidden;
+            }
+        </style>
+</body>
+
+</html>
