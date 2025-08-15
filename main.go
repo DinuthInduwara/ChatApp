@@ -2,9 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
+	"fmt"
 	"log"
+	"math/rand"
+	"net"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/websocket"
 )
 
 var websocketUpgrader = websocket.Upgrader{
@@ -15,16 +20,37 @@ var websocketUpgrader = websocket.Upgrader{
 }
 
 func checkOrigin(r *http.Request) bool {
-	origin := r.Header.Get("Origin")
-	switch origin {
-	case "http://127.0.0.1:8080":
-		return true
-	default:
-		return false
+	return true // Allow all origins for simplicity
+	//origin := r.Header.Get("Origin")
+	// switch origin {
+	// case "http://127.0.0.1:" + strconv.Itoa(PORT):
+	// 	return true
+	// default:
+	// 	return false
+	// }
+}
+func checkPort(port int) (int, error) {
+	addr := net.JoinHostPort("0.0.0.0", strconv.Itoa(port))
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		// Port is in use, try a random port
+		for retries := 0; retries < 10; retries++ {
+			newPort := 1024 + rand.Intn(65535-1024)
+			addr = net.JoinHostPort("0.0.0.0", strconv.Itoa(newPort))
+			listener, err = net.Listen("tcp", addr)
+			if err == nil {
+				listener.Close()
+				return newPort, nil
+			}
+		}
+		return 0, fmt.Errorf("could not find a free port after 10 retries")
 	}
+	listener.Close()
+	return port, nil
 }
 
 var Users = make(map[string]*client)
+var PORT int = 8080
 
 func main() {
 
@@ -58,15 +84,22 @@ func main() {
 		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 	})
 
-	mux.Handle("/fs/", http.StripPrefix("/fs", http.FileServer(http.Dir("./public"))))
+	mux.Handle("/chat/", http.StripPrefix("/chat", http.FileServer(http.Dir("./public"))))
 	mux.Handle("/", handler)
 
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+	PORT, err := checkPort(PORT)
+	if err != nil {
+		log.Fatal("Error finding a free port: ", err)
 	}
 
-	err := server.ListenAndServe()
+	server := &http.Server{
+		Addr:    ":" + strconv.Itoa(PORT),
+		Handler: mux,
+	}
+	log.Printf("Server started on port %d", PORT)
+	log.Printf("Open http://localhost:%d/chat/ in your browser", PORT)
+
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
